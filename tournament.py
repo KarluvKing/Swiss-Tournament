@@ -3,7 +3,7 @@
 # tournament.py -- implementation of a Swiss-system tournament
 #
 
-import psycopg2
+import psycopg2, bleach
 
 
 def connect():
@@ -13,15 +13,29 @@ def connect():
 
 def deleteMatches():
     """Remove all the match records from the database."""
-
+    conn = connect()
+    c = conn.cursor()
+    c.execute("DELETE FROM match")
+    conn.commit() 
+    conn.close()
 
 def deletePlayers():
     """Remove all the player records from the database."""
-
+    conn = connect()
+    c = conn.cursor()
+    c.execute("DELETE FROM players")
+    conn.commit() 
+    conn.close()
 
 def countPlayers():
     """Returns the number of players currently registered."""
-
+    conn = connect()
+    c = conn.cursor()
+    c.execute("SELECT COUNT(*) FROM players")
+    count_players = c.fetchone()
+    count_players = int(count_players[0])
+    conn.close()
+    return count_players
 
 def registerPlayer(name):
     """Adds a player to the tournament database.
@@ -32,9 +46,14 @@ def registerPlayer(name):
     Args:
       name: the player's full name (need not be unique).
     """
-
+    conn = connect()
+    c = conn.cursor()
+    c.execute("INSERT INTO players (name) values (%s)", (bleach.clean(name),))
+    conn.commit() 
+    conn.close()
 
 def playerStandings():
+
     """Returns a list of the players and their win records, sorted by wins.
 
     The first entry in the list should be the player in first place, or a player
@@ -47,7 +66,19 @@ def playerStandings():
         wins: the number of matches the player has won
         matches: the number of matches the player has played
     """
+    conn = connect()
+    c = conn.cursor()
+    c.execute("SELECT * FROM match")
+    player_standings = c.fetchall()
+    if len(player_standings) == 0:
+        c.execute("SELECT *, 0, 0 FROM players")
+        standings = c.fetchall()
+    else:
+        c.execute("SELECT * FROM Vplay_total") 
+        standings = c.fetchall()
 
+    conn.close()
+    return standings
 
 def reportMatch(winner, loser):
     """Records the outcome of a single match between two players.
@@ -56,13 +87,19 @@ def reportMatch(winner, loser):
       winner:  the id number of the player who won
       loser:  the id number of the player who lost
     """
- 
- 
+    conn = connect()
+    c = conn.cursor()
+    c.execute("INSERT INTO match (player_winner, player_loser) values (%s, %s)", 
+             (bleach.clean(winner,),(bleach.clean(loser,))))
+    conn.commit()
+    conn.close()    
+
 def swissPairings():
+
     """Returns a list of pairs of players for the next round of a match.
   
     Assuming that there are an even number of players registered, each player
-    appears exactly once in the pairings.  Each player is paired with another
+    appears exactly once in the pairings. Each player is paired with another
     player with an equal or nearly-equal win record, that is, a player adjacent
     to him or her in the standings.
   
@@ -73,5 +110,17 @@ def swissPairings():
         id2: the second player's unique id
         name2: the second player's name
     """
+    result = playerStandings()
+    matches = []
+    position = 0
+    zero_records = 0
+
+    while len(result) > zero_records:
+        matches.append((result[0][0], result[0][1])) #add the first record
+        result.pop(0) #removes the first record, continue...
+        matches[position] += (result[0][0], result[0][1]) #adds the second record of the list in position i and makes the tuple
+        result.pop(0) #removes the second record, continue...
+        position += 1
+    return matches
 
 
