@@ -8,6 +8,8 @@
 
 CREATE DATABASE tournament;
 
+\c tournament
+
 CREATE TABLE players (id SERIAL PRIMARY KEY, name TEXT);
 
 CREATE TABLE match (id SERIAL PRIMARY KEY,
