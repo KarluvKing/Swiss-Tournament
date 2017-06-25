@@ -35,4 +35,5 @@ CREATE VIEW Vplay_total AS
 SELECT Vplay_wins.id AS id_player, Vplay_wins.name AS player, Vplay_wins.player_win AS win_games, 
        Vplay_wins.player_win + Vplay_lose.player_loser AS total_games
 FROM Vplay_lose INNER JOIN Vplay_wins 
-ON Vplay_lose.id = Vplay_wins.id;
+ON Vplay_lose.id = Vplay_wins.id
+ORDER BY win_games DESC;

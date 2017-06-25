@@ -3,7 +3,7 @@
 # tournament.py -- implementation of a Swiss-system tournament
 #
 
-import psycopg2, bleach
+import psycopg2
 
 
 def connect():
@@ -48,12 +48,11 @@ def registerPlayer(name):
     """
     conn = connect()
     c = conn.cursor()
-    c.execute("INSERT INTO players (name) values (%s)", (bleach.clean(name),))
+    c.execute("INSERT INTO players (name) values (%s)", (name,))
     conn.commit() 
     conn.close()
 
 def playerStandings():
-
     """Returns a list of the players and their win records, sorted by wins.
 
     The first entry in the list should be the player in first place, or a player
@@ -68,14 +67,8 @@ def playerStandings():
     """
     conn = connect()
     c = conn.cursor()
-    c.execute("SELECT * FROM match")
-    player_standings = c.fetchall()
-    if len(player_standings) == 0:
-        c.execute("SELECT *, 0, 0 FROM players")
-        standings = c.fetchall()
-    else:
-        c.execute("SELECT * FROM Vplay_total") 
-        standings = c.fetchall()
+    c.execute("SELECT * FROM Vplay_total") 
+    standings = c.fetchall()
 
     conn.close()
     return standings
@@ -90,12 +83,11 @@ def reportMatch(winner, loser):
     conn = connect()
     c = conn.cursor()
     c.execute("INSERT INTO match (player_winner, player_loser) values (%s, %s)", 
-             (bleach.clean(winner,),(bleach.clean(loser,))))
+             (winner, loser))
     conn.commit()
     conn.close()    
 
 def swissPairings():
-
     """Returns a list of pairs of players for the next round of a match.
   
     Assuming that there are an even number of players registered, each player
@@ -122,5 +114,3 @@ def swissPairings():
         result.pop(0) #removes the second record, continue...
         position += 1
     return matches
-
-
